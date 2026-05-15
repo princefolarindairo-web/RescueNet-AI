@@ -207,7 +207,7 @@ function getColor(r) {
 
 function loadData() {
 
-    fetch("https://rescuenet-ai-2vs7.onrender.com")
+    fetch("https://rescuenet-ai-2vs7.onrender.com/risk")
     .then(res => res.json())
     .then(data => {
 
@@ -297,6 +297,10 @@ loadData();
 setInterval(loadData, 5000);
 
 </script>
+
+<footer>
+    <p>&copy; 2026 RescueNet AI. All rights reserved.</p>
+</footer>
 
 </body>
 </html>
