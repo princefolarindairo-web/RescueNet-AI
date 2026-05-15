@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RescueNet AI Control Room</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+    <style>
+
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: #0b1220;
+            color: white;
+        }
+
+        header {
+            background: #0f172a;
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #alertBar {
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            background: #16a34a;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .card {
+            background: #111827;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .card p {
+            font-size: 22px;
+            margin-top: 10px;
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: 2.5fr 1fr;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        #map {
+            height: 70vh;
+            border-radius: 10px;
+        }
+
+        .panel-box {
+            background: #111827;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .feed-item {
+            padding: 8px;
+            margin-bottom: 6px;
+            background: #1f2937;
+            border-left: 4px solid #3b82f6;
+            font-size: 12px;
+        }
+
+        .legend div {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        button {
+            margin-right: 10px;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h2>🚑 RescueNet AI</h2>
+        <small>Emergency Control System</small>
+    </div>
+</header>
+
+<div id="alertBar">SYSTEM MONITORING ACTIVE</div>
+
+<div style="padding:10px;">
+    <button onclick="switchToStreet()">Street</button>
+    <button onclick="switchToSatellite()">Satellite</button>
+</div>
+
+<div class="stats">
+
+    <div class="card">
+        <h3>Flood Zones</h3>
+        <p id="floodCount">0</p>
+    </div>
+
+    <div class="card">
+        <h3>Earthquakes</h3>
+        <p id="earthquakeCount">0</p>
+    </div>
+
+    <div class="card">
+        <h3>High Risk</h3>
+        <p id="highRiskCount">0</p>
+    </div>
+
+    <div class="card">
+        <h3>Status</h3>
+        <p style="color:lightgreen;">ONLINE</p>
+    </div>
+
+</div>
+
+<div class="main">
+
+    <div id="map"></div>
+
+    <div>
+
+        <div class="panel-box">
+            <h3>📡 Live Feed</h3>
+            <div id="feed"></div>
+        </div>
+
+        <div class="panel-box">
+            <h3>🧠 AI Insights</h3>
+            <div id="ai"></div>
+        </div>
+
+        <div class="panel-box">
+            <h3>🗺️ Legend</h3>
+            <div class="legend">
+                <div>🔴 High Risk</div>
+                <div>🟠 Medium Risk</div>
+                <div>🟢 Low Risk</div>
+                <div>🌎 Earthquake</div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+var satellite = L.tileLayer(
+    'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+    {
+        attribution: 'Google Satellite',
+        maxZoom: 20
+    }
+);
+var map = L.map('map', {
+    center: [6.5, 3.4],
+    zoom: 5,
+    layers: [street]
+});
+
+function switchToStreet() {
+    map.removeLayer(satellite);
+    street.addTo(map);
+}
+
+function switchToSatellite() {
+    map.removeLayer(street);
+    satellite.addTo(map);
+}
+
+let markers = [];
+
+function getColor(r) {
+    if (r === "High") return "red";
+    if (r === "Medium") return "orange";
+    return "green";
+}
+
+function loadData() {
+
+    fetch("http://127.0.0.1:8000/risk")
+    .then(res => res.json())
+    .then(data => {
+
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+
+        let flood = 0;
+        let eq = 0;
+        let high = 0;
+
+        let feed = "";
+
+        data.data.forEach(d => {
+
+            if (d.type === "Earthquake") {
+
+                eq++;
+
+                markers.push(
+                    L.circleMarker([d.lat, d.lon], {
+                        color: "gold",
+                        radius: 7
+                    }).addTo(map)
+                );
+
+                feed += `<div class="feed-item">🌎 ${d.recommendation}</div>`;
+            }
+
+            else {
+
+                flood++;
+
+                if (d.risk_level === "High") high++;
+
+                let c = getColor(d.risk_level);
+
+                markers.push(
+                    L.circle([d.lat, d.lon], {
+                        color: c,
+                        fillColor: c,
+                        fillOpacity: 0.5,
+                        radius: 4000
+                    }).addTo(map)
+                );
+
+                feed += `<div class="feed-item">🌧️ ${d.zone} - ${d.risk_level} (${d.trend})</div>`;
+            }
+
+        });
+
+        document.getElementById("floodCount").innerText = flood;
+        document.getElementById("earthquakeCount").innerText = eq;
+        document.getElementById("highRiskCount").innerText = high;
+
+        document.getElementById("feed").innerHTML = feed;
+
+        let aiText = "";
+
+        if (high > 0) {
+            aiText = `
+            ⚠️ SYSTEM ANALYSIS:<br>
+            Elevated hazard probability detected across monitored regions.<br>
+            Recommended action: activate emergency preparedness protocols.
+            `;
+        } else {
+            aiText = `
+            ✅ SYSTEM ANALYSIS:<br>
+            All monitored regions are currently within safe operational thresholds.
+            `;
+        }
+
+        document.getElementById("ai").innerHTML = aiText;
+
+        let bar = document.getElementById("alertBar");
+
+        if (high > 0) {
+            bar.style.background = "#dc2626";
+            bar.innerHTML = "🚨 ACTIVE DISASTER RISK DETECTED — MONITORING ESCALATION ZONES";
+        } else {
+            bar.style.background = "#16a34a";
+            bar.innerHTML = "🟢 SYSTEM STATUS: STABLE — ALL REGIONS CLEAR";
+        }
+    });
+}
+
+loadData();
+setInterval(loadData, 5000);
+
+</script>
+
+</body>
+</html>
