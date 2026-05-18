@@ -293,9 +293,11 @@ feed += `
 
         document.getElementById("feed").innerHTML = feed;
 
-        let aiText = "";
+      let aiText = "";
 
-       if (high > 0) {
+let bar = document.getElementById("alertBar");
+
+if (high > 0) {
 
     aiText = `
     🚨 AI THREAT ANALYSIS<br><br>
@@ -311,15 +313,25 @@ feed += `
         <li>Increase field surveillance</li>
     </ul>
     `;
+
+    bar.style.background = "#dc2626";
+    bar.innerHTML = "🚨 ACTIVE DISASTER RISK DETECTED — MONITORING ESCALATION ZONES";
+
+} else {
+
+    aiText = `
+    ✅ AI STATUS REPORT<br><br>
+
+    All monitored regions are operating within safe environmental thresholds.<br><br>
+
+    No critical disaster escalation patterns currently detected.
+    `;
+
+    bar.style.background = "#16a34a";
+    bar.innerHTML = "🟢 SYSTEM STATUS: STABLE — ALL REGIONS CLEAR";
 }
 
-        if (high > 0) {
-            bar.style.background = "#dc2626";
-            bar.innerHTML = "🚨 ACTIVE DISASTER RISK DETECTED — MONITORING ESCALATION ZONES";
-        } else {
-            bar.style.background = "#16a34a";
-            bar.innerHTML = "🟢 SYSTEM STATUS: STABLE — ALL REGIONS CLEAR";
-        }
+document.getElementById("ai").innerHTML = aiText;
     });
 }
 
