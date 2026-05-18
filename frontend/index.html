@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
     <title>RescueNet AI Control Room</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet"
+        href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <style>
 
@@ -94,27 +97,35 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            .high-risk {
-    animation: pulse 1.5s infinite;
-}
+            background: #2563eb;
+            color: white;
+        }
 
-@keyframes pulse {className: d.risk_level === "High" ? "high-risk" : ""
+        button:hover {
+            background: #1d4ed8;
+        }
 
-    0% {
-        opacity: 0.5;
-    }
+        .high-risk {
+            animation: pulse 1.5s infinite;
+        }
 
-    50% {
-        opacity: 1;
-    }
+        @keyframes pulse {
 
-    100% {
-        opacity: 0.5;
-    }
-}
+            0% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.5;
+            }
         }
 
     </style>
+
 </head>
 
 <body>
@@ -126,24 +137,44 @@
         <small>Emergency Control System</small>
     </div>
 
-    <div id="clock" style="font-size:14px; color:#94a3b8;"></div>
+    <div id="clock"
+        style="font-size:14px; color:#94a3b8;">
+    </div>
 
 </header>
 
-<div id="alertBar">SYSTEM MONITORING ACTIVE</div>
+<div id="alertBar">
+    SYSTEM MONITORING ACTIVE
+</div>
+
 <div style="
 padding:8px 15px;
 background:#111827;
 font-size:13px;
 border-bottom:1px solid #1f2937;
 ">
+
 📍 Cursor Coordinates:
-<span id="coords">Move cursor over map</span>
+<span id="coords">
+    Move cursor over map
+</span>
+
 </div>
 
 <div style="padding:10px;">
-    <button onclick="switchToStreet()">Street</button>
-    <button onclick="switchToSatellite()">Satellite</button>
+
+    <button onclick="switchToStreet()">
+        Street
+    </button>
+
+    <button onclick="switchToSatellite()">
+        Satellite
+    </button>
+
+    <button onclick="activateSimulation()">
+        Emergency Simulation
+    </button>
+
 </div>
 
 <div class="stats">
@@ -165,7 +196,9 @@ border-bottom:1px solid #1f2937;
 
     <div class="card">
         <h3>Status</h3>
-        <p style="color:lightgreen;">ONLINE</p>
+        <p style="color:lightgreen;">
+            ONLINE
+        </p>
     </div>
 
 </div>
@@ -177,23 +210,34 @@ border-bottom:1px solid #1f2937;
     <div>
 
         <div class="panel-box">
+
             <h3>📡 Live Feed</h3>
+
             <div id="feed"></div>
+
         </div>
 
         <div class="panel-box">
+
             <h3>🧠 AI Insights</h3>
+
             <div id="ai"></div>
+
         </div>
 
         <div class="panel-box">
+
             <h3>🗺️ Legend</h3>
+
             <div class="legend">
+
                 <div>🔴 High Risk</div>
                 <div>🟠 Medium Risk</div>
                 <div>🟢 Low Risk</div>
                 <div>🌎 Earthquake</div>
+
             </div>
+
         </div>
 
     </div>
@@ -204,190 +248,302 @@ border-bottom:1px solid #1f2937;
 
 <script>
 
-var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-var satellite = L.tileLayer(
-    'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-    {
-        attribution: 'Google Satellite',
-        maxZoom: 20
-    }
-);
-var map = L.map('map', {
-    center: [6.5, 3.4],
-    zoom: 5,
-    layers: [street]
-});
+    // STREET MAP
+    var street = L.tileLayer(
+        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+    );
 
-L.control.scale().addTo(map);
+    // GOOGLE SATELLITE
+    var satellite = L.tileLayer(
+        'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        {
+            attribution: 'Google Satellite',
+            maxZoom: 20
+        }
+    );
 
-function switchToStreet() {
-    map.removeLayer(satellite);
-    street.addTo(map);
-}
-
-function switchToSatellite() {
-    map.removeLayer(street);
-    satellite.addTo(map);
-}
-
-let markers = [];
-
-function getColor(r) {
-    if (r === "High") return "red";
-    if (r === "Medium") return "orange";
-    return "green";
-}
-
-function loadData() {
-
-    fetch("https://rescuenet-ai-2vs7.onrender.com/risk")
-    .then(res => res.json())
-    .then(data => {
-
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
-
-        let flood = 0;
-        let eq = 0;
-        let high = 0;
-
-        let feed = "";
-
-        data.data.forEach(d => {
-
-            if (d.type === "Earthquake") {
-
-                eq++;
-
-                markers.push(
-                    L.circleMarker([d.lat, d.lon], {
-                        color: "gold",
-                        radius: 7
-                    }).addTo(map)
-                );
-if (markers.length > 0) {
-
-    let group = L.featureGroup(markers);
-
-    map.fitBounds(group.getBounds(), {
-        padding: [40, 40]
+    // MAP SETUP
+    var map = L.map('map', {
+        center: [6.5, 3.4],
+        zoom: 5,
+        layers: [street]
     });
-} 
 
-feed += `
-<div class="feed-item">
-    <b>[${new Date().toLocaleTimeString()}]</b><br>
-    🌎 ${d.recommendation}
-</div>
-`;
+    // SCALE
+    L.control.scale().addTo(map);
+
+    // SWITCH MAPS
+    function switchToStreet() {
+
+        map.removeLayer(satellite);
+        street.addTo(map);
+
+    }
+
+    function switchToSatellite() {
+
+        map.removeLayer(street);
+        satellite.addTo(map);
+
+    }
+
+    // MARKERS STORAGE
+    let markers = [];
+
+    // RISK COLORS
+    function getColor(risk) {
+
+        if (risk === "High") return "red";
+
+        if (risk === "Medium") return "orange";
+
+        return "green";
+    }
+let simulationMode = false;
+function activateSimulation() {
+
+    simulationMode = true;
+
+    alert("Emergency simulation activated.");
+}
+    // LOAD DATA
+    function loadData() {
+
+        fetch("https://rescuenet-ai-2vs7.onrender.com/risk")
+
+        .then(res => res.json())
+
+        .then(data => {
+
+            // CLEAR OLD MARKERS
+            markers.forEach(m => map.removeLayer(m));
+
+            markers = [];
+
+            let flood = 0;
+            let eq = 0;
+            let high = 0;
+
+            let feed = "";
+
+            data.data.forEach(d => {
+
+                // EARTHQUAKE
+                if (d.type === "Earthquake") {
+
+                    eq++;
+
+                    let quakeMarker = L.circleMarker(
+                        [d.lat, d.lon],
+                        {
+                            color: "gold",
+                            radius: 7
+                        }
+                    )
+                    .addTo(map)
+                    .bindPopup(`
+                        <b>🌎 Earthquake Event</b><br><br>
+
+                        <b>Risk Level:</b> ${d.risk_level}<br>
+                        <b>Status:</b> ${d.trend}<br><br>
+
+                        ${d.recommendation}
+                    `);
+
+                    markers.push(quakeMarker);
+
+                    feed += `
+                    <div class="feed-item">
+
+                        <b>[${new Date().toLocaleTimeString()}]</b><br>
+
+                        🌎 ${d.recommendation}
+
+                    </div>
+                    `;
+                }
+
+                // FLOODS
+                else {
+
+                    flood++;
+
+                   if (simulationMode && d.zone === "Lagos") {
+
+    d.risk_level = "High";
+    d.trend = "Critical";
+    d.recommendation =
+    "Emergency evacuation strongly advised";
+
+}
+
+if (d.risk_level === "High") {
+    high++;
+}
+
+                    let c = getColor(d.risk_level);
+
+                    let floodZone = L.circle(
+                        [d.lat, d.lon],
+                        {
+                            color: c,
+                            fillColor: c,
+                            fillOpacity: 0.5,
+
+                            radius:
+
+                            d.risk_level === "High"
+                            ? 7000
+
+                            : d.risk_level === "Medium"
+                            ? 5000
+
+                            : 3000
+                        }
+                    )
+                    .addTo(map)
+
+                    .bindPopup(`
+
+                        <b>🚨 ${d.zone}</b><br><br>
+
+                        <b>Disaster Type:</b> ${d.type}<br>
+
+                        <b>Risk Level:</b> ${d.risk_level}<br>
+
+                        <b>Trend:</b> ${d.trend}<br><br>
+
+                        <b>Recommendation:</b><br>
+
+                        ${d.recommendation}
+
+                    `);
+
+                    markers.push(floodZone);
+
+                    feed += `
+                    <div class="feed-item">
+
+                        <b>[${new Date().toLocaleTimeString()}]</b><br>
+
+                        🌧️ ${d.zone}<br>
+
+                        Risk Level: ${d.risk_level}<br>
+
+                        Trend: ${d.trend}
+
+                    </div>
+                    `;
+                }
+
+            });
+
+            // AUTO FIT MAP
+            if (markers.length > 0) {
+
+                let group = L.featureGroup(markers);
+
+                map.fitBounds(
+                    group.getBounds(),
+                    {
+                        padding: [40, 40]
+                    }
+                );
+            }
+
+            // UPDATE CARDS
+            document.getElementById("floodCount").innerText = flood;
+
+            document.getElementById("earthquakeCount").innerText = eq;
+
+            document.getElementById("highRiskCount").innerText = high;
+
+            document.getElementById("feed").innerHTML = feed;
+
+            // AI ANALYSIS
+            let aiText = "";
+
+            let bar = document.getElementById("alertBar");
+
+            if (high > 0) {
+
+                aiText = `
+                🚨 AI THREAT ANALYSIS<br><br>
+
+                Multiple elevated-risk regions detected across monitored areas.<br><br>
+
+                Predictive assessment indicates increased probability of localized flooding events if rainfall intensity persists.<br><br>
+
+                Recommended Actions:
+
+                <ul>
+
+                    <li>Deploy rapid response teams</li>
+
+                    <li>Monitor evacuation-sensitive zones</li>
+
+                    <li>Increase field surveillance</li>
+
+                </ul>
+                `;
+
+                bar.style.background = "#dc2626";
+
+                bar.innerHTML =
+                "🚨 ACTIVE DISASTER RISK DETECTED — MONITORING ESCALATION ZONES";
+
             }
 
             else {
 
-                flood++;
+                aiText = `
+                ✅ AI STATUS REPORT<br><br>
 
-                if (d.risk_level === "High") high++;
+                All monitored regions are operating within safe environmental thresholds.<br><br>
 
-                let c = getColor(d.risk_level);
+                No critical disaster escalation patterns currently detected.
+                `;
 
-                markers.push(
-                    L.circle([d.lat, d.lon], {
-                        color: c,
-                        fillColor: c,
-                        fillOpacity: 0.5,
-radius:
-d.risk_level === "High" ? 7000 :
-d.risk_level === "Medium" ? 5000 : 3000
-}).addTo(map)
-.bindPopup(`
-<b>${d.zone}</b><br>
-Type: ${d.type}<br>
-Risk: ${d.risk_level}<br>
-Trend: ${d.trend}<br>
-Recommendation: ${d.recommendation}
-`)
-                );
+                bar.style.background = "#16a34a";
 
-feed += `
-<div class="feed-item">
-    <b>[${new Date().toLocaleTimeString()}]</b><br>
-    🌧️ ${d.zone}<br>
-    Risk Level: ${d.risk_level}<br>
-    Trend: ${d.trend}
-</div>
-`;
+                bar.innerHTML =
+                "🟢 SYSTEM STATUS: STABLE — ALL REGIONS CLEAR";
             }
+
+            document.getElementById("ai").innerHTML = aiText;
 
         });
 
-        document.getElementById("floodCount").innerText = flood;
-        document.getElementById("earthquakeCount").innerText = eq;
-        document.getElementById("highRiskCount").innerText = high;
+    }
 
-        document.getElementById("feed").innerHTML = feed;
+    // CLOCK
+    function updateClock() {
 
-      let aiText = "";
+        let now = new Date();
 
-let bar = document.getElementById("alertBar");
+        document.getElementById("clock").innerHTML =
+            "UTC TIME: " + now.toUTCString();
+    }
 
-if (high > 0) {
+    setInterval(updateClock, 1000);
 
-    aiText = `
-    🚨 AI THREAT ANALYSIS<br><br>
+    updateClock();
 
-    Multiple elevated-risk regions detected across monitored areas.<br><br>
+    // CURSOR COORDINATES
+    map.on('mousemove', function(e) {
 
-    Predictive assessment indicates increased probability of localized flooding events if rainfall intensity persists.<br><br>
+        document.getElementById("coords").innerHTML =
 
-    Recommended Actions:
-    <ul>
-        <li>Deploy rapid response teams</li>
-        <li>Monitor evacuation-sensitive zones</li>
-        <li>Increase field surveillance</li>
-    </ul>
-    `;
+        `${e.latlng.lat.toFixed(4)},
+        ${e.latlng.lng.toFixed(4)}`;
 
-    bar.style.background = "#dc2626";
-    bar.innerHTML = "🚨 ACTIVE DISASTER RISK DETECTED — MONITORING ESCALATION ZONES";
-
-} else {
-
-    aiText = `
-    ✅ AI STATUS REPORT<br><br>
-
-    All monitored regions are operating within safe environmental thresholds.<br><br>
-
-    No critical disaster escalation patterns currently detected.
-    `;
-
-    bar.style.background = "#16a34a";
-    bar.innerHTML = "🟢 SYSTEM STATUS: STABLE — ALL REGIONS CLEAR";
-}
-
-document.getElementById("ai").innerHTML = aiText;
     });
-}
 
-function updateClock() {
+    // INITIAL LOAD
+    loadData();
 
-    let now = new Date();
-
-    document.getElementById("clock").innerHTML =
-        "UTC TIME: " + now.toUTCString();
-}
-
-setInterval(updateClock, 1000);
-
-updateClock();
-
-map.on('mousemove', function(e) {
-
-    document.getElementById("coords").innerHTML =
-        `${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
-});
-
-loadData();
-setInterval(loadData, 10000);
+    // REFRESH EVERY 10 SECONDS
+    setInterval(loadData, 10000);
 
 </script>
 
@@ -399,8 +555,11 @@ color:#94a3b8;
 background:#0f172a;
 margin-top:10px;
 ">
+
 © 2026 RescueNet AI — Real-Time Disaster Intelligence Platform
+
 </footer>
 
 </body>
+
 </html>
