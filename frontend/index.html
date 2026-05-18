@@ -188,7 +188,7 @@ border-bottom:1px solid #1f2937;
 
 var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
 var satellite = L.tileLayer(
-    'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+    'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
     {
         attribution: 'Google Satellite',
         maxZoom: 20
@@ -342,7 +342,7 @@ map.on('mousemove', function(e) {
 });
 
 loadData();
-setInterval(loadData, 5000);
+setInterval(loadData, 10000);
 
 </script>
 
