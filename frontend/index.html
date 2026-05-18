@@ -94,6 +94,24 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            .high-risk {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {className: d.risk_level === "High" ? "high-risk" : ""
+
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
         }
 
     </style>
@@ -247,6 +265,14 @@ function loadData() {
                         radius: 7
                     }).addTo(map)
                 );
+if (markers.length > 0) {
+
+    let group = L.featureGroup(markers);
+
+    map.fitBounds(group.getBounds(), {
+        padding: [40, 40]
+    });
+} 
 
 feed += `
 <div class="feed-item">
@@ -272,7 +298,14 @@ feed += `
 radius:
 d.risk_level === "High" ? 7000 :
 d.risk_level === "Medium" ? 5000 : 3000
-                    }).addTo(map)
+}).addTo(map)
+.bindPopup(`
+<b>${d.zone}</b><br>
+Type: ${d.type}<br>
+Risk: ${d.risk_level}<br>
+Trend: ${d.trend}<br>
+Recommendation: ${d.recommendation}
+`)
                 );
 
 feed += `
